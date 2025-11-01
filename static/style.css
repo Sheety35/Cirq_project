@@ -1,0 +1,42 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #fafafa;
+  padding: 30px;
+}
+
+#toolbox {
+  margin-bottom: 20px;
+}
+
+.gate {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-right: 5px;
+  cursor: grab;
+}
+
+#circuit-area {
+  margin-top: 20px;
+  background: white;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.qubit-line {
+  margin: 10px 0;
+  font-family: monospace;
+  position: relative;
+}
+
+.gate-placed {
+  position: absolute;
+  background: #007bff;
+  color: white;
+  padding: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+}
