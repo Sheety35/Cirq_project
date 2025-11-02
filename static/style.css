@@ -8,6 +8,7 @@ body {
   margin-bottom: 15px;
 }
 
+/* Style for gate buttons in the toolbox */
 .gate {
   background: #007bff;
   color: white;
@@ -25,18 +26,21 @@ body {
   padding: 15px;
   overflow-x: auto;
   min-height: 200px;
-  position: relative;
+  position: relative; /* Needed for absolute positioning of wires */
 }
 
 .qubit-line {
   position: relative;
   height: 50px;
   margin-bottom: 10px;
+  display: flex; /* Use flexbox for alignment */
+  align-items: center;
 }
 
 .qubit-wire {
   position: absolute;
-  top: 25px;
+  top: 50%;
+  transform: translateY(-50%);
   left: 0;
   right: 0;
   height: 2px;
@@ -45,43 +49,95 @@ body {
 }
 
 .state {
-  position: absolute;
-  left: 0;
-  top: 10px;
-  width: 40px;
+  position: relative; /* No longer absolute */
+  width: 50px;
   text-align: center;
   cursor: pointer;
   font-weight: bold;
   z-index: 2;
+  background-color: white; /* To appear above the wire */
+  padding-right: 10px;
 }
 
 .grid {
   display: inline-flex;
-  gap: 40px;
-  margin-left: 50px;
+  gap: 10px; /* Reduced gap for a tighter look */
+  margin-left: 10px;
 }
 
 .cell {
   width: 40px;
   height: 40px;
-  border: 1px dashed transparent;
-  position: relative;
+  position: relative; /* Important for positioning gates and lines */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .cell.dragover {
-  border-color: #007bff;
+  background-color: #e0f0ff;
+  border-radius: 5px;
+}
+
+/* Base style for any placed gate symbol */
+.gate-symbol {
+  width: 36px;
+  height: 36px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
 }
 
 .gate-placed {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  background: #007bff;
-  color: white;
-  border-radius: 5px;
-  padding: 4px 8px;
-  font-size: 14px;
+  background: #eaf5fc;
+  border: 2px solid #3498db;
+  color: #3498db;
+}
+
+/* --- CNOT Styles --- */
+.cnot-control {
+  background: #ff5722;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+/* NEW: Style for the control point before the target is chosen */
+.cnot-pending-control {
+  background: #ff9800; /* Brighter orange to indicate it's active */
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px 3px #ff9800; /* Add a glow effect */
   cursor: pointer;
+}
+
+.cnot-target {
+  background: white;
+  width: 30px;
+  height: 30px;
+  border: 3px solid #ff5722;
+  border-radius: 50%;
+  color: #ff5722;
+  font-size: 20px;
+  line-height: 30px;
+}
+
+/* Vertical line segment for CNOTs */
+.cnot-line-segment {
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  background: #ff5722;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
 }
 
 .remove-btn {
@@ -97,11 +153,11 @@ body {
   line-height: 16px;
   text-align: center;
   cursor: pointer;
+  z-index: 3;
+  display: none; /* Hidden by default */
 }
 
-.cnot-line {
-  position: absolute;
-  width: 2px;
-  background: #ff5722;
-  z-index: 1;
+/* Show remove button on hover */
+.gate-symbol:hover .remove-btn {
+  display: block;
 }
