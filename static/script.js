@@ -3,6 +3,83 @@ let timeSteps = 12; // more columns
 let gates = []; // Our single source of truth for the circuit's state
 const states = ["|0⟩", "|1⟩", "|+⟩", "|-⟩", "|i⟩", "|-i⟩"];
 
+// --- PYODIDE SETUP ---
+let pyodide = null;
+let pythonCode = `
+import cirq
+import json
+
+def run_simulation(json_data):
+    data = json.loads(json_data)
+    n_qubits = data.get("n_qubits", 3)
+    gates = data.get("gates", [])
+    init_states = data.get("init_states", ["|0⟩"] * n_qubits)
+
+    qubits = [cirq.LineQubit(i) for i in range(n_qubits)]
+    circuit = cirq.Circuit()
+
+    # Initial states
+    for i, s in enumerate(init_states):
+        if s == "|1⟩":
+            circuit.append(cirq.X(qubits[i]))
+        elif s == "|+⟩":
+            circuit.append(cirq.H(qubits[i]))
+        elif s == "|-⟩":
+            circuit.append([cirq.X(qubits[i]), cirq.H(qubits[i]), cirq.Z(qubits[i])])
+        elif s == "|i⟩":
+            circuit.append([cirq.H(qubits[i]), cirq.S(qubits[i])])
+        elif s == "|-i⟩":
+            circuit.append([cirq.H(qubits[i]), cirq.S(qubits[i])**-1])
+
+    # Add gates
+    for g in gates:
+        t = g["type"]
+        q = g["target"]
+        if t == "CNOT":
+            circuit.append(cirq.CNOT(qubits[g["control"]], qubits[q]))
+        elif t == "H":
+            circuit.append(cirq.H(qubits[q]))
+        elif t == "X":
+            circuit.append(cirq.X(qubits[q]))
+        elif t == "Y":
+            circuit.append(cirq.Y(qubits[q]))
+        elif t == "Z":
+            circuit.append(cirq.Z(qubits[q]))
+        elif t == "S":
+            circuit.append(cirq.S(qubits[q]))
+        elif t == "T":
+            circuit.append(cirq.T(qubits[q]))
+
+    circuit.append(cirq.measure(*qubits, key='m'))
+    sim = cirq.Simulator()
+    result = sim.run(circuit, repetitions=500)
+    counts = dict(result.multi_measurement_histogram(keys=['m']))
+    formatted = {''.join(map(str, k)): v for k, v in counts.items()}
+    
+    return json.dumps({"diagram": circuit.to_text_diagram(transpose=True), "results": formatted})
+`;
+
+async function initPyodide() {
+    const btn = document.getElementById('simulate-btn');
+    try {
+        pyodide = await loadPyodide();
+        await pyodide.loadPackage("micropip");
+        const micropip = pyodide.pyimport("micropip");
+        btn.textContent = "Installing Cirq...";
+        await micropip.install("cirq-core");
+        // Run the definition code once
+        await pyodide.runPythonAsync(pythonCode);
+        
+        btn.textContent = "▶ Run Simulation";
+        btn.disabled = false;
+    } catch (err) {
+        console.error(err);
+        btn.textContent = "Error loading Pyodide";
+    }
+}
+initPyodide();
+
+
 // --- UPDATED: State machine for placing CNOT gates ---
 // We now store the control qubit AND the time step of the initial drop
 // to show a temporary visual marker.
@@ -214,17 +291,33 @@ document.getElementById('remove-qubit').onclick = () => {
 };
 
 document.getElementById('simulate-btn').onclick = async () => {
-  const initStates = Array.from(document.querySelectorAll('.state')).map(s => s.textContent);
+  if (!pyodide) return;
   
-  const res = await fetch('/simulate', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ n_qubits: nQubits, gates, init_states: initStates })
-  });
+  const btn = document.getElementById('simulate-btn');
+  const originalText = btn.textContent;
+  btn.textContent = "Running...";
+  btn.disabled = true;
 
-  const data = await res.json();
-  document.getElementById('circuit-output').textContent = data.diagram;
-  document.getElementById('results-output').textContent = JSON.stringify(data.results, null, 2);
+  try {
+      const initStates = Array.from(document.querySelectorAll('.state')).map(s => s.textContent);
+      const inputData = JSON.stringify({ n_qubits: nQubits, gates, init_states: initStates });
+      
+      // Call the Python function
+      // We use runPython to call the function we defined earlier
+      // We need to pass the argument. A simple way is to set a variable.
+      pyodide.globals.set("input_json", inputData);
+      const resultJson = await pyodide.runPythonAsync("run_simulation(input_json)");
+      
+      const data = JSON.parse(resultJson);
+      document.getElementById('circuit-output').textContent = data.diagram;
+      document.getElementById('results-output').textContent = JSON.stringify(data.results, null, 2);
+  } catch (err) {
+      console.error(err);
+      alert("Simulation failed: " + err);
+  } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+  }
 };
 
 // Initial render of the circuit

@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>Quantum Circuit Builder</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="static/style.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
 </head>
 <body>
 <h1>⚛️ Quantum Circuit Builder</h1>
@@ -11,7 +12,7 @@
 <div id="controls">
   <button id="add-qubit">+ Add Qubit</button>
   <button id="remove-qubit">− Remove Qubit</button>
-  <button id="simulate-btn">▶ Run Simulation</button>
+  <button id="simulate-btn" disabled>Loading Pyodide...</button>
 </div>
 
 <div id="toolbox">
@@ -35,6 +36,6 @@
 <h3>Simulation Results:</h3>
 <pre id="results-output"></pre>
 
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script src="static/script.js"></script>
 </body>
 </html>
